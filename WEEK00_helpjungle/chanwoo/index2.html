@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+    integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous" />
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery and Bootstrap Bundle (includes Popper) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns"
+    crossorigin="anonymous"></script>
+
+  <!-- 구글폰트 -->
+  <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet" />
+
+  <title>크래프톤 정글 | 도와줘요 정글</title>
+
+  <style>
+    #mainLogo {
+      margin: auto;
+      width: 1000px;
+      height: 500px;
+    }
+
+    #nowUser {
+      float: right;
+      margin: 50px;
+    }
+
+    #write_quest {
+      float: left;
+      margin: 50px;
+    }
+
+    #f1 {
+      height: 100px;
+      margin: auto;
+    }
+
+    #questList {
+      width: 900px;
+      height: 1000px;
+      margin: auto;
+      background-color: darkgray;
+    }
+
+    #post-box {
+      float: left;
+      position: relative;
+      width: 500px;
+      margin: 20px auto;
+      padding: 20px;
+      border: black solid;
+      border-radius: 5px;
+      background-color: darkgray;
+    }
+  </style>
+
+  <script>
+    $(document).ready(function () {
+      $("#questList").html("");
+      showQuests(1);
+    });
+
+    function openClose() {
+      // id 값 post-box의 display 값이 block 이면(= 눈에 보이면)
+      if ($("#post-box").css("display") == "block") {
+        // post-box를 가리고
+        $("#post-box").hide();
+        // 다시 버튼을 클릭하면, 박스 열기를 할 수 있게 텍스트 바꿔두기
+      } else {
+        // 아니면(눈에 보이지 않으면) post-box를 펴라
+        $("#post-box").show();
+        // 다시 버튼을 클릭하면, 박스 닫기를 할 수 있게 텍스트 바꿔두기
+      }
+      // whoIsNow();
+    }
+    function postQuest() {
+      // whoIsNow();
+      let title = $("#quest-title").val();
+      let content = $("#quest-content").val();
+      let reward = $("#quest-reward").val();
+      let userId = $("#nowUser").text()
+      $.ajax({
+        type: "POST", // POST 방식으로 요청하겠다.
+        url: "/post_quest", // /memo라는 url에 요청하겠다.
+        data: {
+          title_give: title,
+          content_give: content,
+          writer_give: userId,
+          reward_give: reward,
+        }, // 데이터를 주는 방법
+        success: function (response) {
+          // 성공하면
+          if (response["result"] == "success") {
+            alert("포스팅 성공!");
+            // 3. 성공 시 페이지 새로고침하기
+            window.location.reload();
+          } else {
+            alert("서버 오류!");
+          }
+        },
+      });
+    }
+
+    function showQuests(sort_value) {
+      let sort = sort_value;
+      let userId = $("#nowUser").text()
+
+      $.ajax({
+        type: "POST",
+        url: "/main",
+        data: { userId: userId, sort: sort },
+        success: function (response) {
+          if (response["result"] == "success") {
+            let quests = response["questslist"]
+            for (let i = 0; i < quests.length; i++) {
+              let quest = quests[i]
+              let questId = quest["questId"];
+              let writerId = quest["writer"];
+              let title = quest["title"];
+              let content = quest["content"];
+              let like = quest["like"];
+              let hate = quest["hate"];
+              let star = quest["star"];
+              let treasure = quest["reward"];
+              let date = quest["date"];
+              let name = quest["name"]
+              let call = quest['call']
+
+              makeCard(
+                questId,
+                writerId,
+                title,
+                date,
+                content,
+                like,
+                hate,
+                star,
+                treasure,
+                name,
+                call)
+            }
+          }
+          else {
+            alert("퀘스트없음!")
+          }
+        }
+        // makeCard
+      });
+    }
+
+    function makeCard(
+      questId,
+      writerId,
+      title,
+      date,
+      content,
+      like,
+      hate,
+      star,
+      reward,
+      name,
+      call
+    ) {
+      let userId = $("#nowUser").text();
+      let nHtml = `<div id="${questId}" class="card">
+      <h5 class="card-header">(${date})(${name})(${call})</h5>
+      <div class="card-body">
+        <h4 class="card-title">${title}</h4>
+        <p class="card-text">${content}</p>
+        <a onclick="questLike('${questId}')" class="btn btn-success">좋아요${like}</a>
+        <a onclick="questHate('${questId}')" class="btn btn-danger">아쉬워요${hate}</a>
+        <a onclick="questStar('${questId}')" class="btn btn-warning">관심${star}</a>
+        <a class="btn btn-primary">보상 : ${reward}</a>
+      </div>
+    </div>
+        `;
+
+      let mHtml = `<div id="${questId}" class="card">
+      <h5 class="card-header">(${date})(${name})(${call})</h5>
+      <div class="card-body">
+        <h4 class="card-title">${title}</h4>
+        <p class="card-text">${content}</p>
+        <a onclick="questLike('${questId}')" class="btn btn-success">좋아요${like}</a>
+        <a onclick="questHate('${questId}')" class="btn btn-danger">아쉬워요${hate}</a>
+        <a onclick="questStar('${questId}')" class="btn btn-warning">관심${star}</a>
+        <a class="btn btn-primary">보상 : ${reward}</a>
+        <a onclick="questDelete('${questId}')" class="btn btn-dark">삭제</a>
+      </div>
+    </div>
+        `;
+
+      let tempHtml = ""
+
+      if (userId == writerId) {
+        tempHtml = mHtml
+      } else {
+        tempHtml = nHtml
+      }
+      $("#questList").append(tempHtml);
+    }
+
+    function questLike(questId) {
+      let userId = $("#nowUser").text();
+      let questId_give = questId
+
+      $.ajax({
+        type: "POST",
+        url: "/like",
+        data: { userId_give: userId, questId_give: questId_give },
+        success: function (response) {
+          if (response["result"] == "success") {
+            window.location.reload();
+          } else {
+            alert("서버 오류!");
+          }
+        },
+      });
+    }
+
+    function questHate(questId) {
+      let userId = $("#nowUser").text();
+      let questId_give = questId
+
+      $.ajax({
+        type: "POST",
+        url: "/hate",
+        data: { userId_give: userId, questId_give: questId_give },
+        success: function (response) {
+          if (response["result"] == "success") {
+            window.location.reload();
+          } else {
+            alert("서버 오류!");
+          }
+        },
+      });
+    }
+
+    function questStar(questId) {
+      let userId = $("#nowUser").text();
+      let questId_give = questId
+
+      $.ajax({
+        type: "POST",
+        url: "/star",
+        data: { userId_give: userId, questId_give: questId_give },
+        success: function (response) {
+          if (response["result"] == "success") {
+            window.location.reload();
+          } else {
+            alert("서버 오류!");
+          }
+        },
+      });
+    }
+
+    function questDelete(questId) {
+      let questId_give = questId
+
+      $.ajax({
+        type: "POST",
+        url: "/delete",
+        data: { id_receive: questId_give },
+        success: function (response) {
+          if (response["result"] == "success") {
+            window.location.reload();
+          } else {
+            alert("서버 오류!");
+          }
+        },
+      });
+    }
+
+  </script>
+</head>
+
+<body>
+  <div id="mainLogo">
+    <img src="../static/indextitle.png" />
+  </div>
+  <div id="f1">
+    <button type="button" class="btn btn-secondary" id="write_quest" onclick="openClose()">퀘스트 작성하기</button>
+    <label for="sort-select"> Sort : </label>
+    <select name="sort" id="sort-select">
+      <option value="1">좋아요</option>
+      <option value="2">싫어요</option>
+      <option value="3">관심</option>
+      <option value="4">보상</option>
+      <option value="5">날짜</option>
+    </select>
+    </form>
+    <h5 id="nowUser">{{userId}}</h5>
+    <div id="post-box" class="form-post" style="display: none">
+      <div>
+        <div class="form-group">
+          <label for="post-url">요청사항</label>
+          <input id="quest-title" class="form-control" placeholder="" />
+        </div>
+        <div class="form-group">
+          <label for="post-comment">세부 내용</label>
+          <textarea id="quest-content" class="form-control" rows="4"></textarea>
+          <p></p>
+          <div class="form-group">
+            <label for="quest-reward">보상</label>
+            <input id="quest-reward" placeholder="" />
+          </div>
+        </div>
+        <div class="form-group"></div>
+        <button id="fin" type="button" class="btn btn-primary" onclick="postQuest()">
+          작성 완료
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="questList">
+    <div class="card">
+      <h5 class="card-header">작성일 작성자 전화번호</h5>
+      <div class="card-body">
+        <h4 class="card-title">음료수 사주세요</h4>
+        <p class="card-text">201호로 음료수를 사다주세요</p>
+        <a onclick="questLike" class="btn btn-success">좋아요</a>
+        <a onclick="questHate" class="btn btn-danger">아쉬워요</a>
+        <a onclick="questStar" class="btn btn-warning">관심</a>
+        <a class="btn btn-primary">보상</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h5 class="card-header">작성일 작성자 전화번호 (작성자 버전)</h5>
+      <div class="card-body">
+        <h4 class="card-title">음료수 사주세요</h4>
+        <p class="card-text">201호로 음료수를 사다주세요</p>
+        <a onclick="questLike" class="btn btn-success">좋아요</a>
+        <a onclick="questHate" class="btn btn-danger">아쉬워요</a>
+        <a onclick="questStar" class="btn btn-warning">관심</a>
+        <a class="btn btn-primary">보상</a>
+        <a onclick="questDelete" class="btn btn-dark">삭제</a>
+      </div>
+    </div>
+  </div>
+</body>

@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+        integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous" />
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery and Bootstrap Bundle (includes Popper) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns"
+        crossorigin="anonymous"></script>
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+
+    <!-- 구글폰트 -->
+    <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet" />
+
+    <title>크래프톤 정글 | 도와줘요 정글</title>
+
+    <style>
+        #mainLogo {
+            margin: auto;
+            width: 1000px;
+            height: 500px;
+        }
+
+        #nowUser {
+            float: right;
+            margin: 30px;
+        }
+
+        #logout {
+            float: right;
+            margin: 30px;
+        }
+
+        #write_quest {
+            float: left;
+            margin: 50px;
+        }
+
+        #f1 {
+            height: 100px;
+            margin: auto;
+        }
+
+        #questList {
+            width: 900px;
+            margin: auto;
+            background-color: darkgray;
+        }
+
+        #accordionExample {
+            width: 800px;
+            margin: 20px auto;
+        }
+
+        #post-box {
+            float: left;
+            position: relative;
+            width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            border: black solid;
+            border-radius: 5px;
+            background-color: darkgray;
+        }
+
+        .wrap {
+            width: max-content;
+            margin: 10px auto;
+        }
+
+        .container {
+            margin-left: 30px;
+        }
+
+        .star {
+            float: right;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            $("#questList").html("");
+            showQuests();
+        });
+
+        // function resort() {
+        //     showQuests()
+        //     window.location.reload();
+        // }
+
+        // $("select[name=sort]").change(function () {
+        //     $("#questList").html("");
+        //     showQuests();
+        // });
+        // function logout() {
+        //     let userId = $("#nowUser").text();
+        //     $.ajax({
+        //         type: "POST", // POST 방식으로 요청하겠다.
+        //         url: "/logout", // /login라는 url에 요청하겠다.
+        //         data: {id_give: userId }, // 데이터를 주는 방법
+        //         success: function (response) { // 성공하면
+        //             if (response["result"] == "success") {
+        //                 alert("로그아웃 성공!");
+        //                 window.location.href = "/";
+        //             } else {
+        //                 alert("로그아웃 오류!")
+        //             }
+        //         }
+        //     })
+        // }
+
+        function logout() {
+            $.removeCookie('token', { path: '/' });
+            window.location.href = '/';
+        }
+
+        function showQuests() {
+            let sort = $("#select-sort").val();
+            let userId = $("#nowUser").text();
+
+            $.ajax({
+                type: "POST",
+                url: "/main",
+                data: { userId_give: userId, sort_give: sort },
+                success: function (response) {
+                    if (response["result"] == "success") {
+                        let quests = response["questslist"]
+                        let starlist = response["starlist"];
+                        for (let i = 0; i < quests.length; i++) {
+                            let quest = quests[i]
+                            let questId = quest["questId"];
+                            let writer = quest["writer"];
+                            let title = quest["title"];
+                            let content = quest["content"];
+                            let like = quest["like"];
+                            let hate = quest["hate"];
+                            let star = quest["star"];
+                            let reward = quest["reward"];
+                            let date = quest["date"];
+                            let name = quest["name"]
+                            let call = quest['call']
+
+                            makeCard(
+                                questId,
+                                writer,
+                                title,
+                                date,
+                                content,
+                                like,
+                                hate,
+                                star,
+                                reward,
+                                name,
+                                call,
+                                starlist)
+                        }
+                    }
+                    else {
+                        alert("퀘스트없음!")
+                    }
+                }
+            });
+        }
+
+        //카드 만들때 headingOne two에 cnt값을 증가시켜서 id지정해야겠다
+        function makeCard(
+            questId,
+            writer,
+            title,
+            date,
+            content,
+            like,
+            hate,
+            star,
+            reward,
+            name,
+            call,
+            starlist) {
+            let st = 1;
+            for (let i = 0; i <= starlist.length; i++) {
+                if (questId == starlist[i]) {
+                    st = 2;
+                }
+            }
+            let userId = $("#nowUser").text();
+            let quest_id_str = String(questId);
+            let nHtml =
+                `<div class="accordion" id="accordionExample">
+                    <div class="card" id="${questId}">
+                        <div class="card-header" id="headingOne">
+                            <h2 class="mb-0">
+                                <span class="date">${date}</span>
+                                <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse${questId}" aria-expanded="true" aria-controls="collapseOne">
+                                    <div class="wrap" class="title">
+                                        <h3>${title}</h3>
+                                    </div>
+                                </button>
+                                <div class="wrap" class="reward">
+                                    <p class="reward-box"><img src="../static/rewardbox.png" width="100" height="100" /> x ${reward}</p>
+                                    <span class="btn btn-success" href="#" role="button" onclick="like('${userId}','${questId}')">좋아요 ${like}</span>
+                                    <span class="btn btn-danger" href="#" role="button" onclick="hate('${userId}','${questId}')">아쉬워요 ${hate}</span>
+                                </div>
+                                <div class="star">
+                                    <button onclick="star(${userId},${questId})" class="btn_image" id="favor_btn${questId}"><img  src="../static/star${st}.png" width="50" height="50"></button>
+                                </div>
+                            </h2>
+                        </div>
+
+                        <div id="collapse${questId}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+                            <div class="card-body">
+                                <div class="accordion" id="accordionCnt1">
+                                    <div class="container">
+                                        <div class="row">
+                                            <div class="col-7">${content}</div>
+                                            <div class="col-3">
+                                                <div class="card">
+                                                    <div class="card-header" id="headingOne">
+                                                        <h2 class="mb-0">
+                                                            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseCnt${questId}" aria-expanded="true" aria-controls="collapseOne">
+                                                                ☎ Contact
+                                                            </button>
+                                                        </h2>
+                                                    </div>
+
+                                                    <div id="collapseCnt${questId}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionCnt1">
+                                                        <div class="card-body">
+                                                            <a class="writer-name">${name}</a>
+                                                            <a class="writer-call">${call}</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            let mHtml =
+                `<div class="accordion" id="accordionExample">
+                    <div class="card" id="${questId}">
+                        <div class="card-header" id="headingOne">
+                            <h2 class="mb-0">
+                                <span class="date">${date}</span>
+                                <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse${questId}" aria-expanded="true" aria-controls="collapseOne">
+                                    <div class="wrap" class="title">
+                                        <h3>${title}</h3>
+                                    </div>
+                                </button>
+                                <div class="wrap" class="reward">
+                                    <p class="reward-box"><img src="../static/rewardbox.png" width="100" height="100" /> x ${reward}</p>
+                                    <span class="btn btn-success" href="#" role="button" onclick="like('${userId}','${questId}')">좋아요 ${like}</span>
+                                    <span class="btn btn-danger" href="#" role="button" onclick="hate('${userId}','${questId}')">아쉬워요 ${hate}</span>
+                                </div>
+                                <div class="star">
+                                    <button onclick="star('${userId}','${questId}')" class="btn_image" id="favor_btn${questId}"><img  src="../static/star${st}.png" width="50" height="50"></button>
+                                </div>
+                            </h2>
+                        </div>
+
+                        <div id="collapse${questId}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+                            <div class="card-body">
+                                <div class="accordion" id="accordionCnt1">
+                                    <div class="container">
+                                        <div class="row">
+                                            <div class="col-7">${content}</div>
+                                            <div class="col-3">
+                                                <div class="card">
+                                                    <div class="card-header" id="headingOne">
+                                                        <h2 class="mb-0">
+                                                            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseCnt${questId}" aria-expanded="true" aria-controls="collapseOne">
+                                                                ☎ Contact
+                                                            </button>
+                                                        </h2>
+                                                    </div>
+
+                                                    <div id="collapseCnt${questId}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionCnt1">
+                                                        <div class="card-body">
+                                                            <a class="writer-name">${name}</a>
+                                                            <a class="writer-call">${call}</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-2">
+                                                <div class="container">
+                                                    <div class="col"><button onclick="editBox('${questId}','${title}','${content}','${reward}')">수정</button></div>
+                                                    <div class="col"><button onclick="deleteQuest('${questId}')">삭제</button></div>
+                                                    <div class="col"><button onclick="finishQuest('${questId}')">완료</button></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            let tempHtml = "";
+
+            if (userId == writer) {
+                tempHtml = mHtml;
+            } else {
+                tempHtml = nHtml;
+            }
+            $("#questList").append(tempHtml);
+        }
+
+        function openClose() {
+            // id 값 post-box의 display 값이 block 이면(= 눈에 보이면)
+            if ($("#post-box").css("display") == "block") {
+                // post-box를 가리고
+                $("#post-box").hide();
+                // 다시 버튼을 클릭하면, 박스 열기를 할 수 있게 텍스트 바꿔두기
+            } else {
+                // 아니면(눈에 보이지 않으면) post-box를 펴라
+                $("#post-box").show();
+                // 다시 버튼을 클릭하면, 박스 닫기를 할 수 있게 텍스트 바꿔두기
+            }
+        }
+
+        function postQuest() {
+            let title = $("#quest-title").val();
+            let content = $("#quest-content").val();
+            let reward = $("#quest-reward").val();
+            let writer = $("#nowUser").text(); //유저아이디.. 어떻게
+            // 2. memo에 POST 방식으로 메모 생성 요청하기
+            if ($('#quest-title').val() == '') {
+                alert('퀘스트 이름을 입력하세요');
+                $('#quest-title').focus();
+            } else if ($('#quest-content').val() == '') {
+                alert('내용을 입력하세요');
+                $('#quest-content').focus();
+            } else {
+                $.ajax({
+                    type: "POST", // POST 방식으로 요청하겠다.
+                    url: "/post_quest", // /memo라는 url에 요청하겠다.
+                    data: {
+                        title_give: title,
+                        content_give: content,
+                        writer_give: writer,
+                        reward_give: reward,
+                    }, // 데이터를 주는 방법
+                    success: function (response) {
+                        // 성공하면
+                        if (response["result"] == "success") {
+                            //alert("포스팅 성공!");
+                            // 3. 성공 시 페이지 새로고침하기
+                            window.location.reload();
+                        } else {
+                            alert("포스팅 오류!");
+                        }
+                    },
+                });
+            }
+        }
+
+        function like(userId, questId) {
+            $.ajax({
+                type: "POST", // POST 방식으로 요청하겠다.
+                url: "/like",
+                data: { userId_give: userId, questId_give: questId }, // 데이터를 주는 방법
+                success: function (response) {
+                    // 성공하면
+                    if (response["result"] == "success") {
+                        //alert("좋아요 성공!");
+                        // 3. 성공 시 페이지 새로고침하기
+                        window.location.reload();
+                    } else {
+                        alert("좋아요 오류!");
+                    }
+                },
+            });
+        }
+        // 인자로 넣던지 id값을 알아내던지  후자로해보자
+        function hate(userId, questId) {
+            $.ajax({
+                type: "POST", // POST 방식으로 요청하겠다.
+                url: "/hate", // /memo라는 url에 요청하겠다.
+                data: { userId_give: userId, questId_give: questId }, // 데이터를 주는 방법
+                success: function (response) {
+                    // 성공하면
+                    if (response["result"] == "success") {
+                        //alert("아쉬워요 성공!");
+                        // 3. 성공 시 페이지 새로고침하기
+                        window.location.reload();
+                    } else {
+                        alert("아쉬워요 오류!");
+                    }
+                },
+            });
+        }
+
+        function star(userId, questId) {
+            $.ajax({
+                type: "POST", // POST 방식으로 요청하겠다.
+                url: "/star", // /memo라는 url에 요청하겠다.
+                data: { userId_give: userId, questId_give: questId }, // 데이터를 주는 방법
+                success: function (response) {
+                    // 성공하면
+                    if (response["result"] == "success") {
+                        //alert("관심목록에 추가되었습니다!");
+                        // 3. 성공 시 페이지 새로고침하기
+                        window.location.reload();
+                    } else {
+                        alert("관심 오류!");
+                    }
+                },
+            });
+        }
+
+        function editBox(questId, title, content, reward) {
+            let tempHtml = `<div id="post-box" class="form-post" style="display: block">
+            <div>
+                <div class="form-group">
+                    <label for="post-url">퀘스트 이름 수정</label>
+                    <input id="new-title" class="form-control" placeholder="${title}" />
+                </div>
+                <div class="form-group">
+                    <label for="post-comment">내용 수정</label>
+                    <textarea id="new-content" class="form-control" rows="4" placeholder="${content}"></textarea>
+                    <p></p>
+                    <div class="form-group">
+                        <label for="quest-reward">보상 선택</label>
+                        <select id="new-reward">
+                            <option value="1">상자 1개</option>
+                            <option value="2">상자 2개</option>
+                            <option value="3">상자 3개</option>
+                            <option value="4">상자 4개</option>
+                            <option value="5">상자 5개</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"></div>
+                <button id="userData" type="button" class="btn btn-secondary" onclick="editQuest('${questId}')">
+                    수정 완료
+                </button>
+            </div>
+        </div>`
+            $(`#${questId}`).append(tempHtml);
+            //$(`#${title}`).hide();
+            //$(`#${content}`).show();
+        }
+
+        function editQuest(questId) {
+            let newtitle = $("#new-title").val();
+            let newcontent = $("#new-content").val();
+            let newreward = $("#new-reward").val();
+            // 2. memo에 POST 방식으로 메모 생성 요청하기
+            $.ajax({
+                type: "POST", // POST 방식으로 요청하겠다.
+                url: "/edit", // /memo라는 url에 요청하겠다.
+                data: {
+                    questId_give: questId,
+                    newtitle_give: newtitle,
+                    newcontent_give: newcontent,
+                    newreward_give: newreward,
+                }, // 데이터를 주는 방법
+                success: function (response) {
+                    // 성공하면
+                    if (response["result"] == "success") {
+                        alert("수정 성공!");
+                        // 3. 성공 시 페이지 새로고침하기
+                        window.location.reload();
+                    } else {
+                        alert("수정 오류!");
+                    }
+                },
+            });
+
+        }
+
+        function deleteQuest(questId) {
+            $.ajax({
+                type: "POST", // POST 방식으로 요청하겠다.
+                url: "/delete", // /memo라는 url에 요청하겠다.
+                data: { questId_give: questId }, // 데이터를 주는 방법
+                success: function (response) {
+                    // 성공하면
+                    if (response["result"] == "success") {
+                        //alert("삭제 성공!");
+                        // 3. 성공 시 페이지 새로고침하기
+                        window.location.reload();
+                    } else {
+                        alert("삭제 오류!");
+                    }
+                },
+            });
+        }
+
+        function finishQuest(questId) {
+            $.ajax({
+                type: "POST", // POST 방식으로 요청하겠다.
+                url: "/finish", // /memo라는 url에 요청하겠다.
+                data: { questId_give: questId }, // 데이터를 주는 방법
+                success: function (response) {
+                    // 성공하면
+                    if (response["result"] == "success") {
+                        alert("퀘스트 완료!");
+                        // 3. 성공 시 페이지 새로고침하기
+                        window.location.reload();
+                    } else {
+                        alert("완료 오류!");
+                    }
+                },
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div id="mainLogo">
+        <img src="../static/indextitle.png" />
+    </div>
+
+    <div id="f1">
+        <button type="button" class="btn btn-secondary" id="write_quest" onclick="openClose()">퀘스트 올리기</button>
+        <form>
+            <select id="select-sort">
+                <option value="1">좋아요순</option>
+                <option value="2">아쉬워요순</option>
+                <option value="3">관심순</option>
+                <option value="4">보상순</option>
+                <option value="5">날짜순</option>
+            </select>
+            <!-- <button type="button" class="btn btn-secondary" id="write_quest" onclick="resort()">정렬하기</button> -->
+        </form>
+
+        <button type="button" class="btn btn-secondary" id="logout" onclick="logout()">로그아웃</button>
+        <h2 id="nowUser">{{userId}}</h2>
+
+
+        <div id="post-box" class="form-post" style="display: none">
+            <div>
+                <div class="form-group">
+                    <label for="post-url">퀘스트 이름</label>
+                    <input id="quest-title" class="form-control" placeholder="" />
+                </div>
+                <div class="form-group">
+                    <label for="post-comment">내용</label>
+                    <textarea id="quest-content" class="form-control" rows="4"></textarea>
+                    <p></p>
+                    <div class="form-group">
+                        <label for="quest-reward">보상 선택</label>
+                        <select id="quest-reward">
+                            <option value="1">상자 1개</option>
+                            <option value="2">상자 2개</option>
+                            <option value="3">상자 3개</option>
+                            <option value="4">상자 4개</option>
+                            <option value="5">상자 5개</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"></div>
+                <button id="userData" type="button" class="btn btn-secondary" onclick="postQuest()">
+                    작성 완료
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="questList">
+    </div>
+</body>
+
+</html>
